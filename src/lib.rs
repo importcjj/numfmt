@@ -42,7 +42,7 @@
 //!
 //! assert_eq!(f.fmt(0.52), "AU$0.52");
 //! assert_eq!(f.fmt(1234.567), "AU$1,234.56");
-//! assert_eq!(f.fmt(12345678900.0), "AU$12,345,678,900.0");
+//! assert_eq!(f.fmt(12345678900.0), "AU$12,345,678,900.00");
 //! ```
 //!
 //! # Scientific Notation
@@ -177,13 +177,13 @@
 //! assert_eq!(f.fmt(12345.0), "12.345 K");
 //!
 //! f = "[n]".parse().unwrap(); // turn off scaling
-//! assert_eq!(f.fmt(12345.0), "12,345.0");
+//! assert_eq!(f.fmt(12345.0), "12,345.000");
 //!
 //! f = "[%.2]".parse().unwrap(); // format as percentages with 2 decimal places
 //! assert_eq!(f.fmt(0.234), "23.40%");
 //!
 //! f = "[b]".parse().unwrap(); // use a binary scaler
-//! assert_eq!(f.fmt(3.14 * 1024.0 * 1024.0), "3.14 Mi");
+//! assert_eq!(f.fmt(3.14 * 1024.0 * 1024.0), "3.140 Mi");
 //! ```
 //!
 //! ## Separator
@@ -198,19 +198,19 @@
 //! # use numfmt::*;
 //! let mut f: Formatter;
 //! f = "[n]".parse().unwrap(); // turn off scaling to see separator
-//! assert_eq!(f.fmt(12345.0), "12,345.0");
+//! assert_eq!(f.fmt(12345.0), "12,345.000");
 //!
 //! f = "[n/]".parse().unwrap(); // use no separator
-//! assert_eq!(f.fmt(12345.0), "12345.0");
+//! assert_eq!(f.fmt(12345.0), "12345.000");
 //!
 //! f = "[n/_]".parse().unwrap(); // use a underscroll
-//! assert_eq!(f.fmt(12345.0), "12_345.0");
+//! assert_eq!(f.fmt(12345.0), "12_345.000");
 //!
 //! f = "[n/ ]".parse().unwrap(); // use a space
-//! assert_eq!(f.fmt(12345.0), "12 345.0");
+//! assert_eq!(f.fmt(12345.0), "12 345.000");
 //!
 //! f = "[n/.]".parse().unwrap(); // use period and commas
-//! assert_eq!(f.fmt(12345.0), "12.345,0");
+//! assert_eq!(f.fmt(12345.0), "12.345,000");
 //! ```
 //!
 //! ## Composing formats
@@ -338,7 +338,7 @@ impl Formatter {
     /// # use numfmt::*;
     /// let mut f = Formatter::currency("$").unwrap();
     /// assert_eq!(f.fmt(12345.6789), "$12,345.67");
-    /// assert_eq!(f.fmt(1234_f64), "$1,234.0");
+    /// assert_eq!(f.fmt(1234_f64), "$1,234.00");
     /// ```
     pub fn currency(prefix: &str) -> Result {
         Self::new()
@@ -592,11 +592,21 @@ impl Formatter {
 
             match precision {
                 Significance(d) | Decimals(d) if in_frac => {
+                    // TODO: should handle rounding
                     if digits >= d {
                         break;
                     }
                 }
                 _ => (),
+            }
+        }
+        
+        println!("{digits} {precision:?}");
+        if let Decimals(d) = precision {
+            for _ in 0..(d-digits) {
+                self.strbuf[idx] = b'0';
+                idx += 1;
+                written += 1;
             }
         }
 
@@ -1029,7 +1039,7 @@ mod tests {
     #[test]
     fn decimals_test() {
         let mut f = Formatter::new().precision(Decimals(6));
-        assert_eq!(f.fmt(1234.5), "1234.5");
+        assert_eq!(f.fmt(1234.5), "1234.500000");
         assert_eq!(f.fmt(123.456789111), "123.456789");
 
         f = Formatter::default()
@@ -1055,7 +1065,7 @@ mod tests {
     fn currency_test() {
         let mut f = Formatter::currency("$").unwrap();
         assert_eq!(f.fmt(12345.6789), "$12,345.67");
-        assert_eq!(f.fmt(1234_f64), "$1,234.0");
+        assert_eq!(f.fmt(1234_f64), "$1,234.00");
 
         let f = Formatter::currency("invalid length prefix");
         assert_eq!(
@@ -1191,6 +1201,13 @@ mod tests {
 
         let mut f: Formatter = "[n/.]".parse().unwrap();
         let s = f.fmt(12345.0);
-        assert_eq!(s, "12.345,0");
+        assert_eq!(s, "12.345,000");
+    }
+
+    #[test]
+    fn decimal_precision_zero_padding() {
+        let mut f: Formatter = "[.2]".parse().unwrap();
+        let s = f.fmt(1.2);
+        assert_eq!(s, "1.20");
     }
 }
