@@ -24,7 +24,7 @@
 //! ```rust
 //! # use numfmt::*;
 //! let mut f = Formatter::default();
-//! assert_eq!(f.fmt(0.0), "0");
+//! assert_eq!(f.fmt(0.0), "0.000");
 //! assert_eq!(f.fmt(12345.6789), "12.345 K");
 //! assert_eq!(f.fmt(0.00012345), "1.234e-4");
 //! assert_eq!(f.fmt(123456e22), "1,234.559 Y");
@@ -304,6 +304,8 @@ pub struct Formatter {
     suffix_len: usize,
     /// Direct conversion.
     convert: fn(f64) -> f64,
+    /// Scientific Notation
+    scientific_notation: bool,
 }
 
 impl Formatter {
@@ -328,6 +330,7 @@ impl Formatter {
             suffix_len: 0,
             convert: |x| x,
             comma: false,
+            scientific_notation: true,
         }
     }
 
@@ -458,6 +461,12 @@ impl Formatter {
         self
     }
 
+    /// toggle scientific notation
+    pub fn scientific_notation(mut self, enable: bool) -> Result {
+        self.scientific_notation = enable;
+        Ok(self)
+    }
+
     /// Sets the prefix.
     ///
     /// If the prefix is longer than the supported length, an error is returned.
@@ -500,8 +509,6 @@ impl Formatter {
             "-∞"
         } else if num.is_infinite() {
             "∞"
-        } else if num.is_zero() {
-            "0"
         } else {
             let num = (self.convert)(num.to_f64());
 
@@ -516,7 +523,9 @@ impl Formatter {
                 Decimals(d) | Significance(d) if d <= 3 => 10f64.powi(d as i32).recip(),
                 _ => SN_SML_CUTOFF,
             };
-            if abs >= SN_BIG_CUTOFF || abs < sn_sml_cutoff {
+
+            println!("== {sn_sml_cutoff}");
+            if self.scientific_notation && !num.is_zero() && (abs >= SN_BIG_CUTOFF || abs < sn_sml_cutoff ){
                 // fmt with scientific notation
                 let (num, exponent) = reduce_to_sn(num);
                 let precision = match self.precision {
@@ -562,6 +571,8 @@ impl Formatter {
         let mut thou = 2 - (num.abs().log10().trunc() as u8) % 3;
         let mut idx = self.start;
 
+        println!("num = {num} s = {s}");
+
         for i in 0..n {
             let byte = tmp[i]; // obtain byte
             self.strbuf[idx] = byte; // write byte
@@ -601,7 +612,6 @@ impl Formatter {
             }
         }
         
-        println!("{digits} {precision:?}");
         if let Decimals(d) = precision {
             for _ in 0..(d-digits) {
                 self.strbuf[idx] = b'0';
@@ -958,7 +968,7 @@ mod tests {
         assert_eq!(f.fmt(123456_f64), "123,456.0");
         assert_eq!(f.fmt(1234_f64), "1,234.0");
         assert_eq!(f.fmt(123_f64), "123.0");
-        assert_eq!(f.fmt(0.0), "0");
+        assert_eq!(f.fmt(0.0), "0.0");
         assert_eq!(f.fmt(0.1234), "0.1234");
         assert_eq!(f.fmt(-123.0), "-123.0");
         assert_eq!(f.fmt(-1234.0), "-1,234.0");
@@ -1209,5 +1219,20 @@ mod tests {
         let mut f: Formatter = "[.2]".parse().unwrap();
         let s = f.fmt(1.2);
         assert_eq!(s, "1.20");
+    }
+
+    #[test]
+    fn format_zero() {
+        let mut f: Formatter = "[.2]%".parse().unwrap();
+        let s = f.fmt(0.00);
+        assert_eq!(s, "0.00%");
+    }
+
+    #[test]
+    fn disable_scientific_notation() {
+        let mut f: Formatter = "[.2]%".parse::<Formatter>().unwrap()
+            .scientific_notation(false).unwrap();
+        let s = f.fmt(0.0003);
+        assert_eq!(s, "0.00%");
     }
 }
