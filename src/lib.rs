@@ -826,20 +826,20 @@ impl Scales {
     ///             .scales(Scales::chinese())
     ///             .precision(Precision::Decimals(1));
     /// assert_eq!(f.fmt(12.34e0), "12.3");
-    /// assert_eq!(f.fmt(12.34e3), "12.3 千");
-    /// assert_eq!(f.fmt(12.34e6), "12.3 百万");
-    /// assert_eq!(f.fmt(12.34e9), "12.3 十亿");
-    /// assert_eq!(f.fmt(12.34e12), "12.3 万亿");
-    /// assert_eq!(f.fmt(12.34e15), "12.3 千万亿");
-    /// assert_eq!(f.fmt(12.34e18), "12.3 百亿亿");
-    /// assert_eq!(f.fmt(12.34e21), "12.3 十万亿亿");
-    /// assert_eq!(f.fmt(12.34e24), "12.3 百亿亿亿");
-    /// assert_eq!(f.fmt(12.34e27), "12,339.9 百亿亿亿");
+    /// assert_eq!(f.fmt(12.34e3), "12.3千");
+    /// assert_eq!(f.fmt(12.34e6), "12.3百万");
+    /// assert_eq!(f.fmt(12.34e9), "12.3十亿");
+    /// assert_eq!(f.fmt(12.34e12), "12.3万亿");
+    /// assert_eq!(f.fmt(12.34e15), "12.3千万亿");
+    /// assert_eq!(f.fmt(12.34e18), "12.3百亿亿");
+    /// assert_eq!(f.fmt(12.34e21), "12.3十万亿亿");
+    /// assert_eq!(f.fmt(12.34e24), "12.3百亿亿亿");
+    /// assert_eq!(f.fmt(12.34e27), "12,339.9百亿亿亿");
     /// ```
     pub fn chinese() -> Self {
         Scales {
             base: 1000,
-            units: vec!["", " 千", " 百万", " 十亿", " 万亿", " 千万亿", " 百亿亿", " 十万亿亿", " 百亿亿亿"],
+            units: vec!["", "千", "百万", "十亿", "万亿", "千万亿", "百亿亿", "十万亿亿", "百亿亿亿"],
         }
     }
 

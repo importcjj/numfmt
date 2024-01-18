@@ -113,7 +113,7 @@ pub fn parse_formatter(s: &str) -> std::result::Result<Formatter, ParseError> {
             CloseBracket => break,
             tt => {
                 return Err(ParseError::Unexp(
-                    "., ,, ~, %, s, m, b, n, /, ]",
+                    "., ,, ~, %, s, z, m, b, n, /, ]",
                     tt.as_char(),
                 ))
             }
@@ -431,7 +431,7 @@ mod tests {
         assert!(r.is_err());
         assert_eq!(
             &r.unwrap_err().to_string(),
-            "unexpected character. expected a ., ,, ~, %, s, m, b, n, /, ] but found 'f'"
+            "unexpected character. expected a ., ,, ~, %, s, z, m, b, n, /, ] but found 'f'"
         );
 
         let r = p("[.3~1]");
