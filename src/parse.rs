@@ -100,6 +100,7 @@ pub fn parse_formatter(s: &str) -> std::result::Result<Formatter, ParseError> {
             Char('s') if scaler.is_none() => scaler = Some(Scaler::Short),
             Char('m') if scaler.is_none() => scaler = Some(Scaler::Metric),
             Char('b') if scaler.is_none() => scaler = Some(Scaler::Binary),
+            Char('z') if scaler.is_none() => scaler = Some(Scaler::Chinese),
             Char('n') if scaler.is_none() => scaler = Some(Scaler::No),
             Char('%') | Char('s') | Char('b') | Char('n') if scaler.is_some() => {
                 return Err(ParseError::DupScaler(token.as_char()))
@@ -134,6 +135,7 @@ pub fn parse_formatter(s: &str) -> std::result::Result<Formatter, ParseError> {
             suffix.insert(0, '%');
             Formatter::percentage()
         }
+        Some(Scaler::Chinese) => Formatter::default().scales(Scales::chinese()),
         Some(Scaler::Short) => Formatter::default().scales(Scales::short()),
         Some(Scaler::Metric) => Formatter::default().scales(Scales::metric()),
         Some(Scaler::Binary) => Formatter::default().scales(Scales::binary()),
@@ -201,6 +203,7 @@ impl Token {
 enum Scaler {
     Percent,
     Short,
+    Chinese,
     Metric,
     Binary,
     No,
@@ -409,6 +412,9 @@ mod tests {
 
         let r = p("[n]");
         assert_eq!(r, Ok(Formatter::default().scales(Scales::none())));
+
+        let r = p("[z]");
+        assert_eq!(r, Ok(Formatter::default().scales(Scales::chinese())));
     }
 
     #[test]

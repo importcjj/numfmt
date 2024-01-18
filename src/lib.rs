@@ -813,6 +813,36 @@ impl Scales {
         }
     }
 
+    /// The Chinese scaling method.
+    ///
+    /// Based on a [short scale](https://en.wikipedia.org/wiki/Long_and_short_scales)
+    /// the scaling uses base `1000`. The units are meant to be used to denote _magnitude_ of the
+    /// number, so the empty base is empty.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use numfmt::*;
+    /// let mut f = Formatter::default()
+    ///             .scales(Scales::chinese())
+    ///             .precision(Precision::Decimals(1));
+    /// assert_eq!(f.fmt(12.34e0), "12.3");
+    /// assert_eq!(f.fmt(12.34e3), "12.3 千");
+    /// assert_eq!(f.fmt(12.34e6), "12.3 百万");
+    /// assert_eq!(f.fmt(12.34e9), "12.3 十亿");
+    /// assert_eq!(f.fmt(12.34e12), "12.3 万亿");
+    /// assert_eq!(f.fmt(12.34e15), "12.3 千万亿");
+    /// assert_eq!(f.fmt(12.34e18), "12.3 百亿亿");
+    /// assert_eq!(f.fmt(12.34e21), "12.3 十万亿亿");
+    /// assert_eq!(f.fmt(12.34e24), "12.3 百亿亿亿");
+    /// assert_eq!(f.fmt(12.34e27), "12,339.9 百亿亿亿");
+    /// ```
+    pub fn chinese() -> Self {
+        Scales {
+            base: 1000,
+            units: vec!["", " 千", " 百万", " 十亿", " 万亿", " 千万亿", " 百亿亿", " 十万亿亿", " 百亿亿亿"],
+        }
+    }
+
     /// Create a metric SI scale.
     ///
     /// The [SI scale](https://en.wikipedia.org/wiki/International_System_of_Units#Prefixes)
